@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎤 English Conversation Practice</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: #f8f9fa;
+            padding: 30px;
+            border-right: 2px solid #e9ecef;
+        }
+        
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+        }
+        
+        .control-group {
+            margin-bottom: 30px;
+        }
+        
+        .control-group h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .topic-buttons {
+            display: grid;
+            gap: 10px;
+        }
+        
+        .topic-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+        
+        .topic-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        
+        .action-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+        
+        .action-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .action-btn.danger {
+            background: #dc3545;
+        }
+        
+        .action-btn.danger:hover {
+            background: #c82333;
+        }
+        
+        .conversation-display {
+            flex: 1;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            background: #f8f9fa;
+            min-height: 400px;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 15px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        
+        .message.user {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .message.ai {
+            background: #e9ecef;
+            color: #495057;
+            margin-right: auto;
+        }
+        
+        .message.system {
+            background: #fff3cd;
+            color: #856404;
+            margin: 0 auto;
+            text-align: center;
+            max-width: 90%;
+        }
+        
+        .message-header {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+        
+        .input-area {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            font-size: 1em;
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+        }
+        
+        .message-input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .send-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        
+        .send-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        
+        .send-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .stats {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .stats h3 {
+            color: #495057;
+            margin-bottom: 15px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-connected {
+            background: #28a745;
+        }
+        
+        .status-disconnected {
+            background: #dc3545;
+        }
+        
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .input-area {
+                flex-direction: column;
+            }
+            
+            .message {
+                max-width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎤 English Conversation Practice</h1>
+            <p>Practice English with your AI conversation partner</p>
+            <div>
+                <span class="status-indicator" id="connectionStatus"></span>
+                <span id="connectionText">Connecting...</span>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="control-group">
+                    <h3>🎯 Topics</h3>
+                    <div class="topic-buttons">
+                        <button class="topic-btn" onclick="startTopic('daily_life')">Daily Life</button>
+                        <button class="topic-btn" onclick="startTopic('travel')">Travel</button>
+                        <button class="topic-btn" onclick="startTopic('food')">Food & Cooking</button>
+                        <button class="topic-btn" onclick="startTopic('hobbies')">Hobbies</button>
+                        <button class="topic-btn" onclick="startTopic('work_study')">Work & Study</button>
+                        <button class="topic-btn" onclick="startTopic('future_goals')">Goals & Dreams</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>🔧 Actions</h3>
+                    <button class="action-btn" onclick="saveConversation()">💾 Save Chat</button>
+                    <button class="action-btn danger" onclick="clearConversation()">🔄 Clear Chat</button>
+                </div>
+                
+                <div class="stats">
+                    <h3>📊 Stats</h3>
+                    <div class="stat-item">
+                        <span>Messages:</span>
+                        <span id="messageCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Tokens:</span>
+                        <span id="tokenCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Duration:</span>
+                        <span id="sessionDuration">0:00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>AI Provider:</span>
+                        <span id="aiProvider">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-area">
+                <div class="conversation-display" id="conversation"></div>
+                
+                <div class="input-area">
+                    <textarea 
+                        class="message-input" 
+                        id="messageInput" 
+                        placeholder="Type your message here... (Press Ctrl+Enter to send)"
+                        maxlength="1000"
+                    ></textarea>
+                    <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Socket.IO
+        const socket = io();
+        let isConnected = false;
+        
+        // DOM elements
+        const conversation = document.getElementById('conversation');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const connectionText = document.getElementById('connectionText');
+        
+        // Socket events
+        socket.on('connect', function() {
+            isConnected = true;
+            updateConnectionStatus(true);
+            console.log('Connected to server');
+        });
+        
+        socket.on('disconnect', function() {
+            isConnected = false;
+            updateConnectionStatus(false);
+            console.log('Disconnected from server');
+        });
+        
+        socket.on('status', function(data) {
+            updateConnectionStatus(data.connected);
+            if (data.ai_available) {
+                addMessage('system', 'AI conversation partner is ready!');
+            }
+        });
+        
+        socket.on('response', function(data) {
+            addMessage('user', data.user_message);
+            addMessage('ai', data.ai_response);
+            updateStats(data.stats);
+            setSendButtonState(false);
+        });
+        
+        socket.on('error', function(data) {
+            addMessage('system', `Error: ${data.message}`);
+            setSendButtonState(false);
+        });
+        
+        // Update connection status
+        function updateConnectionStatus(connected) {
+            const statusElement = connectionStatus;
+            const textElement = connectionText;
+            
+            if (connected) {
+                statusElement.className = 'status-indicator status-connected';
+                textElement.textContent = 'Connected';
+            } else {
+                statusElement.className = 'status-indicator status-disconnected';
+                textElement.textContent = 'Disconnected';
+            }
+        }
+        
+        // Add message to conversation
+        function addMessage(type, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const icon = type === 'user' ? '🙋' : type === 'ai' ? '🤖' : 'ℹ️';
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">${icon} ${type.charAt(0).toUpperCase() + type.slice(1)} - ${timestamp}</div>
+                <div>${content}</div>
+            `;
+            
+            conversation.appendChild(messageDiv);
+            conversation.scrollTop = conversation.scrollHeight;
+        }
+        
+        // Send message
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || !isConnected) return;
+            
+            setSendButtonState(true);
+            socket.emit('message', { message: message });
+            messageInput.value = '';
+        }
+        
+        // Set send button state
+        function setSendButtonState(loading) {
+            sendBtn.disabled = loading;
+            sendBtn.textContent = loading ? 'Sending...' : 'Send';
+            
+            if (loading) {
+                document.body.classList.add('loading');
+            } else {
+                document.body.classList.remove('loading');
+            }
+        }
+        
+        // Start topic conversation
+        async function startTopic(topic) {
+            try {
+                const response = await fetch('/api/start-topic', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ topic: topic })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    addMessage('ai', data.message);
+                } else {
+                    addMessage('system', `Error: ${data.error}`);
+                }
+            } catch (error) {
+                addMessage('system', `Error starting topic: ${error.message}`);
+            }
+        }
+        
+        // Save conversation
+        async function saveConversation() {
+            try {
+                const response = await fetch('/api/conversation/save', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    addMessage('system', `Conversation saved as ${data.filename}`);
+                } else {
+                    addMessage('system', `Error saving: ${data.error}`);
+                }
+            } catch (error) {
+                addMessage('system', `Error saving conversation: ${error.message}`);
+            }
+        }
+        
+        // Clear conversation
+        async function clearConversation() {
+            if (!confirm('Are you sure you want to clear the conversation?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/conversation/clear', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    conversation.innerHTML = '';
+                    addMessage('system', 'Conversation cleared');
+                    updateStats({ total_messages: 0, total_tokens: 0, session_duration: 0 });
+                } else {
+                    addMessage('system', `Error clearing: ${data.error}`);
+                }
+            } catch (error) {
+                addMessage('system', `Error clearing conversation: ${error.message}`);
+            }
+        }
+        
+        // Update statistics
+        function updateStats(stats) {
+            if (!stats) return;
+            
+            document.getElementById('messageCount').textContent = stats.total_messages || 0;
+            document.getElementById('tokenCount').textContent = stats.total_tokens || 0;
+            
+            const duration = stats.session_duration || 0;
+            const minutes = Math.floor(duration / 60);
+            const seconds = Math.floor(duration % 60);
+            document.getElementById('sessionDuration').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('aiProvider').textContent = stats.provider || '-';
+        }
+        
+        // Event listeners
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Load initial stats
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateStats(data.stats);
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        // Initialize
+        setTimeout(loadStats, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+# Credentials and sensitive files
+credentials/
+*.json
+!package.json
+!requirements.json
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+app.log
+
+# Audio files
+*.wav
+*.mp3
+temp_audio.*
+
+# Conversation history (optional - uncomment if you want to keep private)
+# conversations/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Railway
+.railway/
+
+# Model files  
+models/
+*.bin
+*.safetensors
